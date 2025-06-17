@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const migraineSchema = new mongoose.Schema({
   date: {
@@ -20,4 +20,4 @@ const migraineSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-export default mongoose.model('MigraineEntry', migraineSchema);
+module.exports = mongoose.model('MigraineEntry', migraineSchema);
