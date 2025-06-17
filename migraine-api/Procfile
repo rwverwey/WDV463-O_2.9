@@ -1,1 +1,0 @@
-web: cd migraine-api && npm install && node server.js
