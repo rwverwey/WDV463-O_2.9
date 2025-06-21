@@ -1,19 +1,15 @@
 {
-  "name": "migraine-api",
+  "name": "migraine-log-fullstack",
   "version": "1.0.0",
-  "description": "REST API for Migraine Log app",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "cd migraine-log-api && node server.js"
+    "start": "node server.js",
+    "heroku-postbuild": "cd migraine-log-api/client && npm install && npm run build"
   },
-  "keywords": [],
-  "author": "Ryan VerWey",
-  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "mongodb": "^6.5.0",
     "mongoose": "^8.16.0"
   },
   "devDependencies": {
