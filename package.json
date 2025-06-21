@@ -4,7 +4,7 @@
   "private": true,
 "scripts": {
   "heroku-postbuild": "cd migraine-log && npm install && npm run build",
-  "start:prod": "cd migraine-log-api && npm start"
+  "start:prod": "cd migraine-log-api && node server.js"
 },
   "dependencies": {
     "cors": "^2.8.5",

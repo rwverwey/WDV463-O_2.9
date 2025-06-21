@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const path = require('path');
-const entriesRouter = require('./migraine-log-api/routes/entries');
+const entriesRouter = require('./routes/entries');
 
 dotenv.config();
 
