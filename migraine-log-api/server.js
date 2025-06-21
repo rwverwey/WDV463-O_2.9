@@ -31,10 +31,10 @@ app.use('/api/entries', entriesRouter);
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.resolve(__dirname, '..', 'migraine-log', 'dist');
+
   app.use(express.static(clientBuildPath));
 
-  // Safer fallback that doesn't invoke Express route matcher
-  app.use((req, res, next) => {
+  app.get('*', (req, res) => {
     const indexPath = path.join(clientBuildPath, 'index.html');
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
