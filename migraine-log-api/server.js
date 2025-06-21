@@ -19,7 +19,7 @@ if (!DATABASE_URL) {
 app.use(cors());
 app.use(express.json());
 
-// Health-check
+// Health-check route
 app.get('/api', (req, res) => {
   res.json({ status: 'API is running' });
 });
@@ -29,15 +29,16 @@ app.use('/api/entries', entriesRouter);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '..', 'migraine-log', 'dist');
+  const clientBuildPath = path.resolve(__dirname, '..', 'migraine-log', 'dist');
   app.use(express.static(clientBuildPath));
 
-  // Fallback for client-side routing
+  // Correct fallback route with explicit path
   app.get('*', (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
+    res.sendFile(path.resolve(clientBuildPath, 'index.html'));
   });
 }
 
+// Connect to MongoDB and start server
 mongoose
   .connect(DATABASE_URL)
   .then(() => {
