@@ -1,48 +1,63 @@
-import express from 'express';
-import { ObjectId } from 'mongodb';
-import { connectToDatabase } from '../db/mongoClient.js';
+const express = require('express');
+const mongoose = require('mongoose');
+const MigraineEntry = require('../models/MigraineEntry');
 
 const router = express.Router();
 
 // Get all entries
 router.get('/', async (req, res) => {
-  const db = await connectToDatabase();
-  const entries = await db.collection('entries').find().sort({ createdAt: -1 }).toArray();
-  res.json(entries);
+  try {
+    const entries = await MigraineEntry.find().sort({ createdAt: -1 });
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch entries' });
+  }
 });
 
 // Get single entry
 router.get('/:id', async (req, res) => {
-  const db = await connectToDatabase();
-  const entry = await db.collection('entries').findOne({ _id: new ObjectId(req.params.id) });
-  if (!entry) return res.status(404).json({ error: 'Entry not found' });
-  res.json(entry);
+  try {
+    const entry = await MigraineEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Error retrieving entry' });
+  }
 });
 
 // Create new entry
 router.post('/', async (req, res) => {
-  const db = await connectToDatabase();
-  const doc = { ...req.body, createdAt: new Date() };
-  const result = await db.collection('entries').insertOne(doc);
-  res.status(201).json({ _id: result.insertedId, ...doc });
+  try {
+    const newEntry = new MigraineEntry(req.body);
+    const saved = await newEntry.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid entry data' });
+  }
 });
 
 // Update entry
 router.put('/:id', async (req, res) => {
-  const db = await connectToDatabase();
-  const result = await db.collection('entries').findOneAndUpdate(
-    { _id: new ObjectId(req.params.id) },
-    { $set: req.body },
-    { returnDocument: 'after' }
-  );
-  res.json(result.value);
+  try {
+    const updated = await MigraineEntry.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Update failed' });
+  }
 });
 
 // Delete entry
 router.delete('/:id', async (req, res) => {
-  const db = await connectToDatabase();
-  await db.collection('entries').deleteOne({ _id: new ObjectId(req.params.id) });
-  res.json({ success: true });
+  try {
+    await MigraineEntry.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
 });
 
-export default router;
+module.exports = router;
