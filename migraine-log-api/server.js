@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const path = require('path');
 const entriesRouter = require('./routes/entries');
 
 dotenv.config();
@@ -18,11 +19,24 @@ if (!DATABASE_URL) {
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
+// Health-check
+app.get('/api', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
+// API routes
 app.use('/api/entries', entriesRouter);
+
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, 'client', 'dist');
+  app.use(express.static(clientBuildPath));
+
+  // Fallback for client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 mongoose
   .connect(DATABASE_URL)
