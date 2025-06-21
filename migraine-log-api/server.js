@@ -30,7 +30,7 @@ app.use('/api/entries', entriesRouter);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.resolve(__dirname, '..', 'migraine-log', 'dist');
+  const clientBuildPath = path.resolve(__dirname, 'dist');
 
   app.use(express.static(clientBuildPath));
 
