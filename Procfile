@@ -1,1 +1,1 @@
-web: cd migraine-log-api && npm start
+web: npm start
