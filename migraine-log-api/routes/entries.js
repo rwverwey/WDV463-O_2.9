@@ -28,11 +28,22 @@ router.get('/:id', async (req, res) => {
 // Create new entry
 router.post('/', async (req, res) => {
   try {
+    const { date, severity } = req.body;
+
+    // Quick sanity check
+    if (!date || !severity) {
+      return res.status(400).json({ error: 'Date and severity are required' });
+    }
+
     const newEntry = new MigraineEntry(req.body);
     const savedEntry = await newEntry.save();
     return res.status(201).json(savedEntry);
   } catch (err) {
-    return res.status(400).json({ error: 'Invalid entry data' });
+    console.error('Create Error:', err.message, err.errors || '');
+    return res.status(400).json({
+      error: 'Invalid entry data',
+      details: err.errors || err.message
+    });
   }
 });
 
@@ -42,12 +53,12 @@ router.put('/:id', async (req, res) => {
     const updatedEntry = await MigraineEntry.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
     if (!updatedEntry) return res.status(404).json({ error: 'Entry not found' });
     return res.json(updatedEntry);
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to update entry' });
+    return res.status(400).json({ error: 'Failed to update entry', details: err.message });
   }
 });
 
