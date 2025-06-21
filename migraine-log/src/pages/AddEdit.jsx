@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
+const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
+
 export default function AddEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
     date: '',
@@ -14,12 +17,16 @@ export default function AddEdit() {
   });
 
   useEffect(() => {
-    if (id) {
-      fetch(`http://localhost:5000/api/entries/${id}`)
+    if (isEdit) {
+      fetch(`${API_BASE}/api/entries/${id}`)
         .then(res => res.json())
-        .then(data => setForm(data));
+        .then(data => {
+          if (data._id) setForm(data);
+          else console.error('Entry not found:', data);
+        })
+        .catch(err => console.error('Fetch error:', err));
     }
-  }, [id]);
+  }, [id, isEdit]);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,22 +34,36 @@ export default function AddEdit() {
 
   const handleSubmit = e => {
     e.preventDefault();
-    const method = id ? 'PUT' : 'POST';
-    const url = id
-      ? `http://localhost:5000/api/entries/${id}`
-      : 'http://localhost:5000/api/entries';
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit
+      ? `${API_BASE}/api/entries/${id}`
+      : `${API_BASE}/api/entries`;
 
     fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
-    }).then(() => navigate('/log'));
+    })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            throw new Error(err.error || 'Failed to save entry');
+          });
+        }
+        return res.json();
+      })
+      .then(() => navigate('/log'))
+      .catch(err => {
+        console.error('Submission error:', err);
+        alert(`Error: ${err.message}`);
+      });
   };
 
   return (
     <section style={styles.section}>
-      <h2 style={styles.heading}>{id ? 'Edit Entry' : 'New Migraine Entry'}</h2>
+      <h2 style={styles.heading}>{isEdit ? 'Edit Entry' : 'New Migraine Entry'}</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
+        {/* date & severity */}
         <div style={styles.row}>
           <div style={styles.column}>
             <label style={styles.label}>Date</label>
@@ -55,7 +76,6 @@ export default function AddEdit() {
               required
             />
           </div>
-
           <div style={styles.column}>
             <label style={styles.label}>Severity</label>
             <select
@@ -73,6 +93,7 @@ export default function AddEdit() {
           </div>
         </div>
 
+        {/* optional text areas */}
         <label style={styles.label}>Trigger</label>
         <textarea
           name="trigger"
@@ -102,7 +123,7 @@ export default function AddEdit() {
         />
 
         <button type="submit" style={styles.button}>
-          {id ? 'Update Entry' : 'Save Entry'}
+          {isEdit ? 'Update Entry' : 'Save Entry'}
         </button>
       </form>
     </section>

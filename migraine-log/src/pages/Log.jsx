@@ -1,16 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
+
 export default function Log() {
   const [entries, setEntries] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/entries')
+    fetch(`${API_BASE}/api/entries`)
       .then(res => res.json())
       .then(data => {
-        const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setEntries(sorted);
+        if (Array.isArray(data)) {
+          const sorted = data.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          setEntries(sorted);
+        } else {
+          console.error('Unexpected response:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
       });
   }, []);
 
@@ -38,15 +49,24 @@ export default function Log() {
             <tbody>
               {entries.map(entry => (
                 <tr key={entry._id}>
-                  <td style={styles.td}>{new Date(entry.date).toLocaleDateString()}</td>
+                  <td style={styles.td}>
+                    {new Date(entry.date).toLocaleDateString()}
+                  </td>
                   <td style={styles.td}>{entry.severity}</td>
                   <td style={styles.td}>
-                    <button onClick={() => setSelected(entry)} style={styles.viewBtn}>View</button>
-                    <Link to={`/entry/${entry._id}`} style={styles.editBtn}>Edit</Link>
+                    <button
+                      onClick={() => setSelected(entry)}
+                      style={styles.viewBtn}
+                    >
+                      View
+                    </button>
+                    <Link to={`/entry/${entry._id}`} style={styles.editBtn}>
+                      Edit
+                    </Link>
                     <button
                       onClick={() => {
                         if (confirm('Delete this entry?')) {
-                          fetch(`http://localhost:5000/api/entries/${entry._id}`, {
+                          fetch(`${API_BASE}/api/entries/${entry._id}`, {
                             method: 'DELETE',
                           }).then(() => location.reload());
                         }

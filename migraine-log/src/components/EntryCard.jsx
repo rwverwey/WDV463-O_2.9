@@ -1,30 +1,36 @@
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
+
 export default function EntryCard({ entry }) {
   const navigate = useNavigate();
 
   const handleDelete = () => {
     if (confirm('Delete this entry?')) {
-      fetch(`http://localhost:5000/api/entries/${entry._id}`, {
-        method: 'DELETE',
-      }).then(() => navigate(0));
+      fetch(`${API_BASE}/api/entries/${entry._id}`, { method: 'DELETE' })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Failed to delete entry');
+          }
+          // refresh list
+          navigate(0);
+        })
+        .catch(err => {
+          console.error('Delete error:', err);
+          alert('Unable to delete entry');
+        });
     }
   };
 
   return (
     <div style={styles.card}>
       <div style={styles.header}>
-        <h3 style={styles.title}>
-          {new Date(entry.date || entry.createdAt).toLocaleDateString()}
-        </h3>
+        <h3 style={styles.title}>{new Date(entry.date).toLocaleDateString()}</h3>
         <span style={styles.date}>
-          {new Date(entry.createdAt).toLocaleTimeString()}
+          {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
       <p><strong>Severity:</strong> {entry.severity}</p>
-      <p><strong>Trigger:</strong> {entry.trigger}</p>
-      <p><strong>Relief:</strong> {entry.relief}</p>
-      <p><strong>Medication:</strong> {entry.medication}</p>
       <div style={styles.actions}>
         <Link to={`/entry/${entry._id}`} style={styles.edit}>Edit</Link>
         <button onClick={handleDelete} style={styles.delete}>Delete</button>
@@ -53,7 +59,7 @@ const styles = {
     margin: 0,
   },
   date: {
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     color: '#555',
   },
   actions: {
