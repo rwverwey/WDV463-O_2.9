@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs');
 const entriesRouter = require('./routes/entries');
 
 dotenv.config();
@@ -29,12 +30,17 @@ app.use('/api/entries', entriesRouter);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  const staticPath = path.resolve(__dirname, '..', 'migraine-log', 'dist');
-  app.use(express.static(staticPath));
+  const clientBuildPath = path.resolve(__dirname, '..', 'migraine-log', 'dist');
+  app.use(express.static(clientBuildPath));
 
-  // Fallback for client-side routing
-  app.get('/*', (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
+  // Safer fallback that doesn't invoke Express route matcher
+  app.use((req, res, next) => {
+    const indexPath = path.join(clientBuildPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('Not Found');
+    }
   });
 }
 
