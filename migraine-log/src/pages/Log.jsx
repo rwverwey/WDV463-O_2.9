@@ -5,8 +5,7 @@ import { useAuth } from '../context/useAuth';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Log() {
-  const { auth } = useAuth();
-  const token = auth?.token;
+  const { token, user } = useAuth(); // fixed: directly use token and user
   const [entries, setEntries] = useState([]);
   const [selected, setSelected] = useState(null);
 
@@ -67,7 +66,9 @@ export default function Log() {
   return (
     <section style={styles.section}>
       <div style={styles.header}>
-        <h2 style={styles.title}>Migraine Log</h2>
+        <h2 style={styles.title}>
+          {user ? `${user.username}'s Migraine Log` : 'Migraine Log'}
+        </h2>
         <Link to="/entry" style={styles.newBtn}>+ New Entry</Link>
       </div>
 
@@ -134,25 +135,32 @@ export default function Log() {
 const styles = {
   section: {
     padding: '2rem 1rem',
+    background: '#f0f0f0',
+    minHeight: '100vh',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
   },
   title: {
-    fontSize: '2rem',
-    color: 'var(--primary)',
+    fontSize: '1.75rem',
+    color: '#145da0',
+    fontWeight: '700',
   },
   newBtn: {
-    backgroundColor: 'var(--accent)',
-    color: 'var(--white)',
-    padding: '0.75rem 1.25rem',
-    borderRadius: 'var(--border-radius)',
-    textDecoration: 'none',
-    fontWeight: '600',
-  },
+  backgroundColor: '#e0e0e0',
+  color: '#333',
+  padding: '0.4rem 0.75rem',
+  borderRadius: '6px',
+  fontSize: '0.9rem',
+  fontWeight: '500',
+  textDecoration: 'none',
+  border: '1px solid #ccc',
+  transition: 'background 0.2s ease',
+},
+
   empty: {
     fontStyle: 'italic',
     color: '#555',
@@ -163,72 +171,79 @@ const styles = {
   },
   table: {
     width: '100%',
-    borderCollapse: 'separate',
-    borderSpacing: '0 0.75rem',
+    borderCollapse: 'collapse',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
   },
   th: {
     textAlign: 'left',
     padding: '1rem',
-    backgroundColor: 'var(--header-bg)',
-    color: 'var(--black)',
+    backgroundColor: '#f5f5f5',
+    color: '#333',
     fontWeight: '600',
-    borderBottom: '2px solid #ccc',
+    borderBottom: '1px solid #ddd',
   },
   td: {
-    padding: '1rem',
-    backgroundColor: 'var(--white)',
+    padding: '0.85rem 1rem',
     borderBottom: '1px solid #eee',
   },
   viewBtn: {
-    background: 'var(--primary)',
+    background: '#145da0',
     color: 'white',
     border: 'none',
     padding: '0.4rem 0.75rem',
     marginRight: '0.5rem',
     borderRadius: '4px',
     cursor: 'pointer',
+    fontSize: '0.875rem',
   },
   editBtn: {
     marginRight: '0.5rem',
-    color: 'var(--accent)',
-    textDecoration: 'none',
+    color: '#378ef0',
     fontWeight: '500',
+    fontSize: '0.875rem',
+    textDecoration: 'none',
   },
   deleteBtn: {
-    color: '#ef4444',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
+    color: '#e53935',
     fontWeight: '500',
+    fontSize: '0.875rem',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
   },
   modalOverlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
+    zIndex: 1000,
   },
   modal: {
-    background: 'var(--white)',
+    background: 'white',
     padding: '2rem',
-    borderRadius: 'var(--border-radius)',
-    maxWidth: '500px',
+    borderRadius: '8px',
     width: '90%',
+    maxWidth: '500px',
+    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
   },
   modalTitle: {
     fontSize: '1.25rem',
     marginBottom: '1rem',
-    color: 'var(--primary)',
+    color: '#145da0',
   },
   modalClose: {
     marginTop: '1rem',
     padding: '0.5rem 1rem',
-    background: 'var(--accent)',
+    background: '#378ef0',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
   },
 };
+
