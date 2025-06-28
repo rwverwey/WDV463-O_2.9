@@ -8,6 +8,8 @@ export default function AddEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
+  console.log('AddEdit token:', token);
+
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
@@ -19,53 +21,70 @@ export default function AddEdit() {
   });
 
   useEffect(() => {
+    if (!token) {
+      console.warn('No token found. Redirecting to login.');
+      navigate('/login');
+      return;
+    }
+
     if (isEdit) {
       fetch(`${API_BASE}/api/entries/${id}`, {
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Unauthorized or not found');
+          return res.json();
+        })
         .then(data => {
           if (data._id) setForm(data);
           else console.error('Entry not found:', data);
         })
-        .catch(err => console.error('Fetch error:', err));
+        .catch(err => {
+          console.error('Fetch error:', err.message);
+          alert('Error loading entry. You may need to log in again.');
+          navigate('/login');
+        });
     }
-  }, [id, isEdit, token]);
+  }, [id, isEdit, token, navigate]);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
+
+    if (!token) {
+      alert('You must be logged in to submit.');
+      return navigate('/login');
+    }
+
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit
       ? `${API_BASE}/api/entries/${id}`
       : `${API_BASE}/api/entries`;
 
-    fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    })
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => {
-            throw new Error(err.error || 'Failed to save entry');
-          });
-        }
-        return res.json();
-      })
-      .then(() => navigate('/log'))
-      .catch(err => {
-        console.error('Submission error:', err);
-        alert(`Error: ${err.message}`);
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to save entry');
+
+      navigate('/log');
+    } catch (err) {
+      console.error('Submission error:', err.message);
+      alert(`Error: ${err.message}`);
+    }
   };
 
   return (

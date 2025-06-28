@@ -5,19 +5,28 @@ import { useAuth } from '../context/useAuth';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Log() {
-  const { token } = useAuth();
+  const { auth } = useAuth();
+  const token = auth?.token;
   const [entries, setEntries] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_BASE}/entries`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
+
+    const fetchEntries = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/entries`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to fetch entries');
+        }
+
+        const data = await response.json();
         if (Array.isArray(data)) {
           const sorted = data.sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
@@ -26,11 +35,32 @@ export default function Log() {
         } else {
           console.error('Unexpected response:', data);
         }
-      })
-      .catch(err => {
-        console.error('Fetch error:', err);
-      });
+      } catch (err) {
+        console.error('Fetch error:', err.message);
+      }
+    };
+
+    fetchEntries();
   }, [token]);
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this entry?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/entries/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Delete failed');
+
+      setEntries((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
 
   const closeModal = () => setSelected(null);
 
@@ -71,16 +101,7 @@ export default function Log() {
                       Edit
                     </Link>
                     <button
-                      onClick={() => {
-                        if (confirm('Delete this entry?')) {
-                          fetch(`${API_BASE}/entries/${entry._id}`, {
-                            method: 'DELETE',
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            },
-                          }).then(() => location.reload());
-                        }
-                      }}
+                      onClick={() => handleDelete(entry._id)}
                       style={styles.deleteBtn}
                     >
                       Delete
@@ -95,7 +116,7 @@ export default function Log() {
 
       {selected && (
         <div style={styles.modalOverlay} onClick={closeModal}>
-          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 style={styles.modalTitle}>Migraine Details</h3>
             <p><strong>Date:</strong> {new Date(selected.date).toLocaleDateString()}</p>
             <p><strong>Severity:</strong> {selected.severity}</p>

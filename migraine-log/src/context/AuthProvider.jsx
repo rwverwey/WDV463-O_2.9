@@ -9,12 +9,13 @@ export function AuthProvider({ children }) {
   });
 
   useEffect(() => {
-    if (token) localStorage.setItem('token', token);
-    else localStorage.removeItem('token');
+  const storedToken = localStorage.getItem('token');
+  const storedUser = localStorage.getItem('user');
 
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    else localStorage.removeItem('user');
-  }, [token, user]);
+  if (storedToken) setToken(storedToken);
+  if (storedUser) setUser(JSON.parse(storedUser));
+}, []);
+
 
   const login = (newToken, newUser) => {
     setToken(newToken);

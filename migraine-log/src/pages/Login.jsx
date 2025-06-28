@@ -14,13 +14,23 @@ export default function Login() {
     setError('');
     try {
       const res = await login(form.username, form.password);
-      if (res.token && res.user) {
+
+      if (res?.token && res?.user) {
+        console.log('Login success. Token:', res.token);
+        console.log('User:', res.user);
+
         doLogin(res.token, res.user);
+
+        // Also set in localStorage explicitly in case context is late
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+
         navigate('/');
       } else {
-        setError('Login failed');
+        setError('Login failed: No token/user returned');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message || 'Login failed');
     }
   }
