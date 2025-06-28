@@ -4,7 +4,9 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+
 const entriesRouter = require('./routes/entries');
+const authRoutes = require('./routes/auth');
 
 dotenv.config();
 
@@ -20,12 +22,15 @@ if (!DATABASE_URL) {
 app.use(cors());
 app.use(express.json());
 
-// Health-check
+// Health check
 app.get('/api', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
-// API routes
+// Auth routes
+app.use('/api/auth', authRoutes);
+
+// Entries routes (already protected inside entries.js)
 app.use('/api/entries', entriesRouter);
 
 // Serve frontend in production
@@ -44,6 +49,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Connect to DB and start server
 mongoose
   .connect(DATABASE_URL)
   .then(() => {
