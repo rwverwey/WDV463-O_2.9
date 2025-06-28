@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { register } from '../api/api';
-import { useAuth } from '../context/useAuth'; 
+import { useAuth } from '../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
@@ -11,12 +11,17 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const res = await register(form.username, form.password);
-    if (res.token && res.user) {
-      doLogin(res.token, res.user);
-      navigate('/');
-    } else {
-      setError(res.error || 'Registration failed');
+    setError('');
+    try {
+      const res = await register(form.username, form.password);
+      if (res.token && res.user) {
+        doLogin(res.token, res.user);
+        navigate('/');
+      } else {
+        setError('Registration failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Registration failed');
     }
   }
 

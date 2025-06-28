@@ -3,12 +3,11 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const path = require('path');
-const fs = require('fs');
+
+dotenv.config();
 
 const entriesRouter = require('./routes/entries');
 const authRoutes = require('./routes/auth');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,25 +18,15 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
+// Middleware
+app.use(express.json());
+
 // CORS Configuration
 const allowedOrigins = ['http://localhost:5173'];
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-// Handle preflight requests
-app.options('*', cors());
-
-app.use(express.json());
 
 // Health check
 app.get('/api', (req, res) => {
@@ -48,24 +37,17 @@ app.get('/api', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/entries', entriesRouter);
 
-// Serve frontend in production
+// Production static files
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.resolve(__dirname, 'dist');
   app.use(express.static(clientBuildPath));
-
   app.get('*', (req, res) => {
-    const indexPath = path.join(clientBuildPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send('Not Found');
-    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 }
 
-// Connect to DB and start server
-mongoose
-  .connect(DATABASE_URL)
+// Start
+mongoose.connect(DATABASE_URL)
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => {

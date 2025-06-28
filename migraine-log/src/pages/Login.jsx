@@ -11,12 +11,17 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const res = await login(form.username, form.password);
-    if (res.token && res.user) {
-      doLogin(res.token, res.user);
-      navigate('/');
-    } else {
-      setError(res.error || 'Login failed');
+    setError('');
+    try {
+      const res = await login(form.username, form.password);
+      if (res.token && res.user) {
+        doLogin(res.token, res.user);
+        navigate('/');
+      } else {
+        setError('Login failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed');
     }
   }
 
