@@ -1,18 +1,24 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
 
 export default function EntryCard({ entry }) {
   const navigate = useNavigate();
+  const { token } = useAuth(); // get token
 
   const handleDelete = () => {
     if (confirm('Delete this entry?')) {
-      fetch(`${API_BASE}/api/entries/${entry._id}`, { method: 'DELETE' })
+      fetch(`${API_BASE}/api/entries/${entry._id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`, // add token
+        },
+      })
         .then(res => {
           if (!res.ok) {
             throw new Error('Failed to delete entry');
           }
-          // refresh list
           navigate(0);
         })
         .catch(err => {
@@ -38,6 +44,7 @@ export default function EntryCard({ entry }) {
     </div>
   );
 }
+
 
 const styles = {
   card: {

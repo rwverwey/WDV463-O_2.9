@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
 
 export default function AddEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
@@ -18,7 +20,11 @@ export default function AddEdit() {
 
   useEffect(() => {
     if (isEdit) {
-      fetch(`${API_BASE}/api/entries/${id}`)
+      fetch(`${API_BASE}/api/entries/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then(res => res.json())
         .then(data => {
           if (data._id) setForm(data);
@@ -26,7 +32,7 @@ export default function AddEdit() {
         })
         .catch(err => console.error('Fetch error:', err));
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, token]);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -41,7 +47,10 @@ export default function AddEdit() {
 
     fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(form),
     })
       .then(res => {
@@ -63,7 +72,6 @@ export default function AddEdit() {
     <section style={styles.section}>
       <h2 style={styles.heading}>{isEdit ? 'Edit Entry' : 'New Migraine Entry'}</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
-        {/* date & severity */}
         <div style={styles.row}>
           <div style={styles.column}>
             <label style={styles.label}>Date</label>
@@ -93,7 +101,6 @@ export default function AddEdit() {
           </div>
         </div>
 
-        {/* optional text areas */}
         <label style={styles.label}>Trigger</label>
         <textarea
           name="trigger"
