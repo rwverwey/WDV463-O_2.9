@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
-const API_BASE = 'https://migraine-log-baa4e5b57c8b.herokuapp.com';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Log() {
+  const { token } = useAuth();
   const [entries, setEntries] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/entries`)
+    if (!token) return;
+    fetch(`${API_BASE}/entries`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -23,7 +30,7 @@ export default function Log() {
       .catch(err => {
         console.error('Fetch error:', err);
       });
-  }, []);
+  }, [token]);
 
   const closeModal = () => setSelected(null);
 
@@ -66,8 +73,11 @@ export default function Log() {
                     <button
                       onClick={() => {
                         if (confirm('Delete this entry?')) {
-                          fetch(`${API_BASE}/api/entries/${entry._id}`, {
+                          fetch(`${API_BASE}/entries/${entry._id}`, {
                             method: 'DELETE',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
                           }).then(() => location.reload());
                         }
                       }}

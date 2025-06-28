@@ -1,45 +1,58 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const User = require('../models/user'); // adjust if path differs
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'; // Store securely in production
+const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 
-// Register new user
+// Register route
 router.post('/register', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    // Check if user already exists
+  // Validate input
+  if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ message: 'Username and password are required and must be strings.' });
+  }
+
+  try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ error: 'Username already taken' });
+      return res.status(400).json({ message: 'Username already exists.' });
     }
 
-    const user = new User({ username, password });
-    await user.save();
-    res.status(201).json({ message: 'User created' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).json({ message: 'User registered successfully.' });
   } catch (err) {
     console.error('Registration error:', err);
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ message: 'Server error during registration.' });
   }
 });
 
-// Login user and return JWT token
+// Login route
 router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Validate input
+  if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ message: 'Username and password are required and must be strings.' });
+  }
+
   try {
-    const { username, password } = req.body;
-
     const user = await User.findOne({ username });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    if (!user) return res.status(400).json({ message: 'Invalid username or password.' });
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid username or password.' });
+
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(200).json({ token });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ message: 'Server error during login.' });
   }
 });
 
