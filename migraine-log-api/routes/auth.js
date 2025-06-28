@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/user'); // adjust if path differs
+const User = require('../models/User'); // FIXED: Capital U for Linux/Heroku
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 
@@ -10,7 +10,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
-  // Validate input
   if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ message: 'Username and password are required and must be strings.' });
   }
@@ -36,7 +35,6 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Validate input
   if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ message: 'Username and password are required and must be strings.' });
   }
