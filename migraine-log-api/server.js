@@ -19,10 +19,23 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
+// CORS Configuration
+const allowedOrigins = ['http://localhost:5173'];
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -31,16 +44,13 @@ app.get('/api', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
-// Auth routes
+// Routes
 app.use('/api/auth', authRoutes);
-
-// Entries routes (already protected inside entries.js)
 app.use('/api/entries', entriesRouter);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.resolve(__dirname, 'dist');
-
   app.use(express.static(clientBuildPath));
 
   app.get('*', (req, res) => {
